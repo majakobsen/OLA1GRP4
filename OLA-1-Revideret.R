@@ -3,6 +3,12 @@ library("dplyr")
 
 newhomes <- read.csv("https://gist.githubusercontent.com/ayki1000/03cdebe8d2d50a16ef6c2fcd4802c6fd/raw/a2f8319a3277cfb822af5eb0962b8e486818866d/boligsiden.csv")
 View(newhomes)
+
+#Vester Altan er opført i 1963 efter kontrol på boligsiden (OUTLIER KONTROlL
+
+newhomes[1817,12] <- 1963
+newhomes[1817,12]
+
 #Opgave 1
 
 #Opgave 1.1
@@ -13,7 +19,7 @@ subset(newhomes, vej == "egevej" & vejnr =="20")
 #Opgave 2
 
 #Opgave 2.1
-
+newhomesny <- newhomes
 newhomesny <- newhomes %>% filter(complete.cases(.))
 newhomesny$pris <- as.numeric(gsub("[^0-9]", "", newhomesny$pris))
 newhomesny$størrelse <- as.numeric(gsub("[^0-9]", "", newhomesny$størrelse))
@@ -80,28 +86,139 @@ SeksTerninger <- function () {
 
 #Definer en funktion som kaster de 6 terninger 10000 gange, og giver et output i barplot
 
+library(ggplot2)
+
+# Simulér summer af seks terninger
+
 TiTusind <- replicate(10000, SeksTerninger())
+EnMillion <- replicate(1000000, SeksTerninger())
 
+# Fælles design gør figurerne nemme at sammenligne
+lav_terningeplot <- function(resultater, undertitel, farve) {
+  ggplot(data.frame(Sum = resultater), aes(x = Sum)) +
+    geom_histogram(
+      aes(y = after_stat(count / sum(count))),
+      binwidth = 1,
+      boundary = 0.5,
+      fill = farve,
+      colour = "white",
+      linewidth = 0.4
+    ) +
+    geom_vline(
+      xintercept = 21,
+      colour = "#253447",
+      linetype = "dashed",
+      linewidth = 0.7
+    ) +
+    annotate(
+      "text",
+      x = 21.5,
+      y = 0.111,
+      label = "Forventet sum: 21",
+      hjust = 0,
+      colour = "#253447",
+      size = 3.8
+    ) +
+    scale_x_continuous(
+      breaks = seq(6, 36, by = 3),
+      limits = c(5.5, 36.5),
+      expand = expansion(mult = 0)
+    ) +
+    scale_y_continuous(
+      labels = scales::label_percent(accuracy = 1),
+      breaks = seq(0, 0.12, by = 0.02),
+      expand = expansion(mult = c(0, 0))
+    ) +
+    coord_cartesian(ylim = c(0, 0.12)) +
+    labs(
+      title = "Summer omkring 21 forekommer oftest",
+      subtitle = undertitel,
+      x = "Summen af seks terninger",
+      y = "Andel af forsøg (%)",
+      caption = "Kilde: egen simulation i R · Seks fair terninger pr. forsøg"
+    ) +
+    theme_minimal(base_size = 13) +
+    theme(
+      plot.title = element_text(
+        face = "bold",
+        size = 19,
+        colour = "#253447",
+        margin = margin(b = 8)
+      ),
+      plot.subtitle = element_text(
+        size = 12,
+        colour = "#586779",
+        margin = margin(b = 18)
+      ),
+      plot.title.position = "plot",
+      panel.grid.minor = element_blank(),
+      panel.grid.major.x = element_blank(),
+      panel.grid.major.y = element_line(
+        colour = "#E4E9EF",
+        linewidth = 0.4
+      ),
+      axis.title = element_text(colour = "#253447"),
+      axis.title.x = element_text(margin = margin(t = 12)),
+      axis.title.y = element_text(margin = margin(r = 12)),
+      axis.text = element_text(colour = "#586779"),
+      plot.caption = element_text(
+        hjust = 0,
+        size = 9,
+        colour = "#687789",
+        margin = margin(t = 16)
+      ),
+      plot.background = element_rect(
+        fill = "white",
+        colour = NA
+      ),
+      plot.margin = margin(22, 25, 18, 18)
+    )
+}
+
+# Opgave 3.2
 BarPlot1 <- function() {
-  qplot(TiTusind, geom = "histogram", 
-        binwidth = 1,
-        main = "Sum af seks terninger", 
-        xlab = "Sum", 
-        ylab = "Antal")
+  lav_terningeplot(
+    TiTusind,
+    undertitel = "10.000 gentagelser",
+    farve = "#4386B5"
+  )
 }
 
-#Opgave 3.3
-
-#Kopi af 3.2, dog med 1 mio, replikationer
-
+# Opgave 3.3
 BarPlot2 <- function() {
-  EnMillion <- replicate(1000000, SeksTerninger())
-  qplot(EnMillion, geom = "histogram", 
-        binwidth = 1,
-        main = "Sum af seks terninger", 
-        xlab = "Sum", 
-        ylab = "Antal")
+  lav_terningeplot(
+    EnMillion,
+    undertitel = "1.000.000 gentagelser",
+    farve = "#258C85"
+  )
 }
+
+# Vis figurerne
+BarPlot1()
+BarPlot2()
+
+# Gem begge figurer
+r_mappe <- "C:/Users/Lasse/Desktop/R/OLA-1"
+
+ggsave(
+  filename = file.path(r_mappe, "BarPlot1.png"),
+  plot = BarPlot1(),
+  width = 10,
+  height = 6,
+  units = "in",
+  dpi = 300,
+  bg = "white"
+)
+
+ggsave(
+  filename = file.path(r_mappe, "BarPlot2.png"),
+  plot = BarPlot2(),
+  width = 10,
+  height = 6,
+  units = "in",
+  dpi = 300,
+  bg = "white"
+)
 
 #Opgave 3.4 
 FastRække <- 2:6
